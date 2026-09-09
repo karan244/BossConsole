@@ -55,7 +55,7 @@ object FuzzyMatcher {
         if (patternIdx < patternLower.length) return null
 
         // Calculate score based on match quality
-        val score = calculateScore(target, targetLower, matchIndices)
+        val score = calculateScore(pattern, target, targetLower, matchIndices)
         val matchRanges = collapseToRanges(matchIndices)
 
         return MatchResult(score, matchRanges)
@@ -65,6 +65,7 @@ object FuzzyMatcher {
      * Calculate the match score based on various factors.
      */
     private fun calculateScore(
+        pattern: String,
         target: String,
         targetLower: String,
         matchIndices: List<Int>,
@@ -94,7 +95,7 @@ object FuzzyMatcher {
             }
 
             // Bonus for exact case match
-            if (i < target.length && target[idx] == targetLower[idx].uppercaseChar()) {
+            if (i < pattern.length && pattern[i] == target[idx]) {
                 score += 1
             }
 
@@ -126,9 +127,9 @@ object FuzzyMatcher {
      * Word boundaries are:
      * - Start of string
      * - After a path separator (/ or \)
-     * - After an underscore or hyphen
+     * - After an underscore, hyphen, colon, or dot
      * - Transition from lowercase to uppercase (camelCase)
-     * - After a dot
+     * - After whitespace
      */
     private fun isWordBoundary(
         text: String,
@@ -140,10 +141,9 @@ object FuzzyMatcher {
         val prevChar = text[index - 1]
         val currChar = text[index]
 
-        return when {
-            prevChar in listOf('/', '\\', '_', '-', '.', ' ') -> true
-            prevChar.isLowerCase() && currChar.isUpperCase() -> true
-            else -> false
+        return when (prevChar) {
+            '/', '\\', '_', '-', '.', ' ', ':' -> true
+            else -> prevChar.isLowerCase() && currChar.isUpperCase()
         }
     }
 

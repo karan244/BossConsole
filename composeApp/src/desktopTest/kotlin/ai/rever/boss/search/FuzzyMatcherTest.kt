@@ -129,6 +129,26 @@ class FuzzyMatcherTest {
         )
     }
 
+    @Test
+    fun `should give higher score for exact case match`() {
+        val exactCase = FuzzyMatcher.match("Boss", "BossConsole", "bossconsole")
+        val lowerCase = FuzzyMatcher.match("boss", "BossConsole", "bossconsole")
+
+        assertNotNull(exactCase)
+        assertNotNull(lowerCase)
+        assertTrue(
+            exactCase.score > lowerCase.score,
+            "Exact case match (${exactCase.score}) should score higher than different case (${lowerCase.score})",
+        )
+    }
+
+    @Test
+    fun `should give higher score for colon word boundary matches`() {
+        val colonMatch = FuzzyMatcher.match("ma", "module:action", "module:action")
+        assertNotNull(colonMatch)
+        assertTrue(colonMatch.score > 20, "Colon boundary match should have good score, got ${colonMatch.score}")
+    }
+
     // ==================== MATCH RANGE TESTS ====================
 
     @Test
