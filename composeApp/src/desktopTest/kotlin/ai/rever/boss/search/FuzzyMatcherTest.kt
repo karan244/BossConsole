@@ -53,6 +53,15 @@ class FuzzyMatcherTest {
         assertNotNull(result)
     }
 
+    @Test
+    fun `expanding lowercase characters keep original match indices`() {
+        val suffix = assertNotNull(FuzzyMatcher.match("l", "İstanbul"))
+        assertEquals(listOf(MatchRange(7, 8)), suffix.matchRanges)
+        val initial = assertNotNull(FuzzyMatcher.match("İs", "İstanbul"))
+        assertEquals(listOf(MatchRange(0, 2)), initial.matchRanges)
+        assertNotNull(FuzzyMatcher.match("BoSs", "bossconsole"))
+    }
+
     // ==================== SCORING TESTS ====================
 
     @Test

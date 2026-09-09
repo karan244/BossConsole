@@ -90,13 +90,14 @@ object GlobalSearchService {
      */
     private fun proseScore(
         query: String,
+        queryLower: String,
         field: String,
     ): Int? {
         // `search()` trims the query for every source, so this needs no trim of its own - it did
         // once, and having only this one trim is what made whitespace change the shape of the
         // results rather than their number.
         val fieldLower = field.lowercase()
-        if (query.isEmpty() || !fieldLower.contains(query.lowercase())) return null
+        if (query.isEmpty() || !fieldLower.contains(queryLower)) return null
         return FuzzyMatcher.match(query, field, fieldLower)?.score?.takeIf { it >= MIN_SCORE }
     }
 
@@ -655,15 +656,17 @@ object GlobalSearchService {
      * Activation opens Toolbox for kill-switch management (not tool invoke). See
      * [SearchResult.McpToolResult] and BossConsole#380.
      */
-    private fun searchMcpTools(query: String): List<SearchResult.McpToolResult> =
-        SearchSources
+    private fun searchMcpTools(query: String): List<SearchResult.McpToolResult> {
+        val queryLower = query.lowercase()
+
+        return SearchSources
             .mcpTools()
             .mapNotNull { tool ->
                 val nameScore =
                     FuzzyMatcher.match(query, tool.name, tool.name.lowercase())?.score?.takeIf {
                         it >= MIN_SCORE
                     }
-                val descScore = proseScore(query, tool.description)
+                val descScore = proseScore(query, queryLower, tool.description)
 
                 listOfNotNull(nameScore, descScore).maxOrNull()?.let { score ->
                     SearchResult.McpToolResult(
@@ -676,6 +679,7 @@ object GlobalSearchService {
                 }
             }.sortedByDescending { it.score }
             .take(MAX_RESULTS_PER_CATEGORY)
+    }
 
     /**
      * Search the browser's recent pages.
@@ -696,21 +700,24 @@ object GlobalSearchService {
      * Read through [SearchSources] so a unit test can supply pages without the manager, and
      * without the disk read that reaching it entails.
      */
-    private fun searchRecentPages(query: String): List<SearchResult.PageResult> =
-        SearchSources
+    private fun searchRecentPages(query: String): List<SearchResult.PageResult> {
+        val queryLower = query.lowercase()
+
+        return SearchSources
             .recentPages()
             .mapNotNull { page ->
                 val titleScore =
                     FuzzyMatcher.match(query, page.title, page.title.lowercase())?.score?.takeIf {
                         it >= MIN_SCORE
                     }
-                val urlScore = proseScore(query, page.url)
+                val urlScore = proseScore(query, queryLower, page.url)
 
                 listOfNotNull(titleScore, urlScore).maxOrNull()?.let { score ->
                     SearchResult.PageResult(url = page.url, title = page.title, score = score)
                 }
             }.sortedByDescending { it.score }
             .take(MAX_RESULTS_PER_CATEGORY)
+    }
 
     /**
      * Format a keyboard shortcut for display.

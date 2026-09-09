@@ -23,7 +23,9 @@ object FuzzyMatcher {
     /**
      * Attempt to fuzzy match a pattern against a target string.
      *
-     * @param pattern The original search query; matching ignores case, scoring rewards matching case
+     * Matching is case insensitive; both lowercase and uppercase query characters earn exact-case bonuses.
+     *
+     * @param pattern The original search query
      * @param target The string to match against
      * @param targetLower The lowercase version of target (for performance)
      * @return MatchResult if pattern matches, null otherwise
@@ -36,15 +38,16 @@ object FuzzyMatcher {
         if (pattern.isEmpty()) return MatchResult(0, emptyList())
         if (pattern.length > target.length) return null
 
-        val patternLower = pattern.lowercase()
+        val patternLower = lowercasePreservingIndices(pattern, pattern.lowercase())
+        val indexedTargetLower = lowercasePreservingIndices(target, targetLower)
         val matchIndices = mutableListOf<Int>()
 
         var patternIdx = 0
         var targetIdx = 0
 
         // First pass: find if all characters match in order
-        while (patternIdx < patternLower.length && targetIdx < targetLower.length) {
-            if (patternLower[patternIdx] == targetLower[targetIdx]) {
+        while (patternIdx < patternLower.length && targetIdx < indexedTargetLower.length) {
+            if (patternLower[patternIdx] == indexedTargetLower[targetIdx]) {
                 matchIndices.add(targetIdx)
                 patternIdx++
             }
@@ -60,6 +63,19 @@ object FuzzyMatcher {
 
         return MatchResult(score, matchRanges)
     }
+
+    /** Full-string casing can expand characters (for example İ), invalidating highlight indices. */
+    private fun lowercasePreservingIndices(
+        original: String,
+        lowercase: String,
+    ): String =
+        if (lowercase.length == original.length) {
+            lowercase
+        } else {
+            buildString(original.length) {
+                for (char in original) append(char.lowercaseChar())
+            }
+        }
 
     /**
      * Calculate the match score based on various factors.

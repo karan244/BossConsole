@@ -100,6 +100,8 @@ class GlobalSearchNewSourcesTest {
         }
     }
 
+    // --- tools ---------------------------------------------------------------------------------
+
     @Test
     fun `typed case changes tool ranking without changing matches`() {
         registerTools(tool("one", "Boss"), tool("two", "boss"))
@@ -107,21 +109,6 @@ class GlobalSearchNewSourcesTest {
         assertEquals(listOf("one", "two"), resultsOf<SearchResult.ToolResult>("Boss").map { it.panelId })
         assertEquals(listOf("two", "one"), resultsOf<SearchResult.ToolResult>("boss").map { it.panelId })
     }
-
-    @Test
-    fun `description fallback retains typed case and case insensitive eligibility`() {
-        SearchSources.registerMcpTools {
-            listOf(
-                McpToolSearchRecord("one", "test", "Boss", enabled = true),
-                McpToolSearchRecord("two", "test", "boss", enabled = true),
-            )
-        }
-
-        assertEquals(listOf("one", "two"), resultsOf<SearchResult.McpToolResult>("Boss").map { it.name })
-        assertEquals(listOf("two", "one"), resultsOf<SearchResult.McpToolResult>("boss").map { it.name })
-    }
-
-    // --- tools ---------------------------------------------------------------------------------
 
     @Test
     fun `a tool is found by its label`() {
@@ -294,6 +281,19 @@ class GlobalSearchNewSourcesTest {
     }
 
     // --- MCP tools -----------------------------------------------------------------------------
+
+    @Test
+    fun `description fallback retains typed case and case insensitive eligibility`() {
+        SearchSources.registerMcpTools {
+            listOf(
+                McpToolSearchRecord("one", "test", "Boss", enabled = true),
+                McpToolSearchRecord("two", "test", "boss", enabled = true),
+            )
+        }
+
+        assertEquals(listOf("one", "two"), resultsOf<SearchResult.McpToolResult>("Boss").map { it.name })
+        assertEquals(listOf("two", "one"), resultsOf<SearchResult.McpToolResult>("boss").map { it.name })
+    }
 
     @Test
     fun `an MCP tool is found by name and reports whether it is switched off`() {
