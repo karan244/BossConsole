@@ -580,8 +580,8 @@ object GlobalSearchService {
     private fun searchTools(
         query: String,
         windowTools: List<ToolSearchRecord>,
-    ): List<SearchResult.ToolResult> {
-        return windowTools
+    ): List<SearchResult.ToolResult> =
+        windowTools
             .mapNotNull { tool ->
                 val labelMatch = FuzzyMatcher.match(query, tool.label, tool.label.lowercase())
                 val idMatch = FuzzyMatcher.match(query, tool.panelId, tool.panelId.lowercase())
@@ -592,7 +592,6 @@ object GlobalSearchService {
                 }
             }.sortedByDescending { it.score }
             .take(MAX_RESULTS_PER_CATEGORY)
-    }
 
     /**
      * Search the rows of the Settings window.
@@ -656,8 +655,8 @@ object GlobalSearchService {
      * Activation opens Toolbox for kill-switch management (not tool invoke). See
      * [SearchResult.McpToolResult] and BossConsole#380.
      */
-    private fun searchMcpTools(query: String): List<SearchResult.McpToolResult> {
-        return SearchSources
+    private fun searchMcpTools(query: String): List<SearchResult.McpToolResult> =
+        SearchSources
             .mcpTools()
             .mapNotNull { tool ->
                 val nameScore =
@@ -677,7 +676,6 @@ object GlobalSearchService {
                 }
             }.sortedByDescending { it.score }
             .take(MAX_RESULTS_PER_CATEGORY)
-    }
 
     /**
      * Search the browser's recent pages.
@@ -698,8 +696,8 @@ object GlobalSearchService {
      * Read through [SearchSources] so a unit test can supply pages without the manager, and
      * without the disk read that reaching it entails.
      */
-    private fun searchRecentPages(query: String): List<SearchResult.PageResult> {
-        return SearchSources
+    private fun searchRecentPages(query: String): List<SearchResult.PageResult> =
+        SearchSources
             .recentPages()
             .mapNotNull { page ->
                 val titleScore =
@@ -713,7 +711,6 @@ object GlobalSearchService {
                 }
             }.sortedByDescending { it.score }
             .take(MAX_RESULTS_PER_CATEGORY)
-    }
 
     /**
      * Format a keyboard shortcut for display.
