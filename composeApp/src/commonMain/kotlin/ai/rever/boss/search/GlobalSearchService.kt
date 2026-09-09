@@ -87,6 +87,11 @@ object GlobalSearchService {
      * Ranking still comes from [FuzzyMatcher], so these sort among themselves as everything else
      * does. Worth the strictness because any non-empty category draws a section header: without
      * it, a two-character query sprouted a whole "MCP Tools" section of irrelevant tool rows.
+     *
+     * @param query Original query used for scoring.
+     * @param queryLower Must equal `query.lowercase()`; callers hoist this eligibility value outside their loops.
+     * The substring gate uses full-string lowercase, so its Unicode equivalence can differ from the matcher's
+     * index-preserving fallback (for example, `istanbul` does not pass this gate for `İstanbul`).
      */
     private fun proseScore(
         query: String,

@@ -23,11 +23,13 @@ object FuzzyMatcher {
     /**
      * Attempt to fuzzy match a pattern against a target string.
      *
-     * Matching is case insensitive; both lowercase and uppercase query characters earn exact-case bonuses.
+     * Matching is case insensitive; exact-case bonuses deliberately apply to both lowercase and uppercase.
+     * An all-lowercase query therefore favors lowercase targets when other scoring factors are equal.
+     * Smartcase would make lowercase queries neutral and change this exact-case preference.
      *
      * @param pattern The original search query
      * @param target The string to match against
-     * @param targetLower The lowercase version of target (for performance)
+     * @param targetLower Cached lowercase target; rebuilt with simple casing if full lowercase changes its length.
      * @return MatchResult if pattern matches, null otherwise
      */
     fun match(
@@ -64,7 +66,12 @@ object FuzzyMatcher {
         return MatchResult(score, matchRanges)
     }
 
-    /** Full-string casing can expand characters (for example İ), invalidating highlight indices. */
+    /**
+     * Full-string casing can expand characters (for example İ), invalidating highlight indices.
+     * The fallback rebuilds even a cached lowercase value using simple per-character casing. This preserves
+     * UTF-16 indices but can differ from contextual whole-string casing, such as Greek final sigma.
+     * It does not provide grapheme-aware matching or prevent a range from splitting a surrogate pair.
+     */
     private fun lowercasePreservingIndices(
         original: String,
         lowercase: String,
@@ -110,7 +117,7 @@ object FuzzyMatcher {
             }
 
             // Bonus for exact case match
-            if (i < pattern.length && pattern[i] == target[idx]) {
+            if (pattern[i] == target[idx]) {
                 score += 1
             }
 
