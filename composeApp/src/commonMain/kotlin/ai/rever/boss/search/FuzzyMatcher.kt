@@ -8,7 +8,7 @@ import kotlin.math.max
  * Implements a scoring algorithm similar to VS Code's quick open:
  * - Characters must match in order (but not consecutively)
  * - Consecutive matches score higher
- * - Word boundary matches (camelCase, underscore, path separator) score higher
+ * - Word boundary matches (camelCase, path separators, underscore, hyphen, colon, dot, space) score higher
  * - Earlier matches score higher than later matches
  */
 object FuzzyMatcher {
@@ -29,7 +29,8 @@ object FuzzyMatcher {
      *
      * @param pattern The original search query
      * @param target The string to match against
-     * @param targetLower Cached lowercase target; rebuilt with simple casing if full lowercase changes its length.
+     * @param targetLower Must equal `target.lowercase()`; accepted precomputed to reuse cached values.
+     * Rebuilt with simple casing if full lowercase changes its length.
      * @return MatchResult if pattern matches, null otherwise
      */
     fun match(
@@ -86,6 +87,7 @@ object FuzzyMatcher {
 
     /**
      * Calculate the match score based on various factors.
+     * [match] guarantees one index per pattern character, with every index inside the original target.
      */
     private fun calculateScore(
         pattern: String,
