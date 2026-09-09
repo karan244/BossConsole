@@ -89,15 +89,15 @@ object GlobalSearchService {
      * it, a two-character query sprouted a whole "MCP Tools" section of irrelevant tool rows.
      */
     private fun proseScore(
-        queryLower: String,
+        query: String,
         field: String,
     ): Int? {
         // `search()` trims the query for every source, so this needs no trim of its own - it did
         // once, and having only this one trim is what made whitespace change the shape of the
         // results rather than their number.
         val fieldLower = field.lowercase()
-        if (queryLower.isEmpty() || !fieldLower.contains(queryLower)) return null
-        return FuzzyMatcher.match(queryLower, field, fieldLower)?.score?.takeIf { it >= MIN_SCORE }
+        if (query.isEmpty() || !fieldLower.contains(query.lowercase())) return null
+        return FuzzyMatcher.match(query, field, fieldLower)?.score?.takeIf { it >= MIN_SCORE }
     }
 
     /**
@@ -305,11 +305,10 @@ object GlobalSearchService {
             return emptyList()
         }
 
-        val queryLower = query.lowercase()
         val results = mutableListOf<SearchResult.FileResult>()
 
         for (file in files) {
-            val nameMatch = FuzzyMatcher.match(queryLower, file.name, file.lowerName)
+            val nameMatch = FuzzyMatcher.match(query, file.name, file.lowerName)
 
             if (nameMatch != null && nameMatch.score >= MIN_SCORE) {
                 results.add(
@@ -324,7 +323,7 @@ object GlobalSearchService {
                 continue
             }
 
-            val pathMatch = FuzzyMatcher.match(queryLower, file.relativePath, file.relativePath.lowercase())
+            val pathMatch = FuzzyMatcher.match(query, file.relativePath, file.relativePath.lowercase())
             if (pathMatch != null && pathMatch.score >= MIN_SCORE) {
                 val fileNameStart = file.relativePath.lastIndexOf('/') + 1
                 val adjustedRanges =
@@ -364,12 +363,11 @@ object GlobalSearchService {
             return emptyList()
         }
 
-        val queryLower = query.lowercase()
         val results = mutableListOf<SearchResult.TabResult>()
 
         for (tab in tabs) {
             val title = tab.tabInfo.title
-            val titleMatch = FuzzyMatcher.match(queryLower, title, title.lowercase())
+            val titleMatch = FuzzyMatcher.match(query, title, title.lowercase())
 
             if (titleMatch != null && titleMatch.score >= MIN_SCORE) {
                 results.add(
@@ -498,12 +496,11 @@ object GlobalSearchService {
             return emptyList()
         }
 
-        val queryLower = query.lowercase()
         val results = mutableListOf<SearchResult.RunConfigResult>()
 
         for (config in allConfigs) {
             val name = config.name
-            val nameMatch = FuzzyMatcher.match(queryLower, name, name.lowercase())
+            val nameMatch = FuzzyMatcher.match(query, name, name.lowercase())
 
             if (nameMatch != null && nameMatch.score >= MIN_SCORE) {
                 results.add(
@@ -531,17 +528,16 @@ object GlobalSearchService {
     private fun searchCommands(query: String): List<SearchResult.CommandResult> {
         val allActionIds = KeymapActions.getAllActionIds()
         val settings = KeymapSettingsManager.currentSettings.value
-        val queryLower = query.lowercase()
         val results = mutableListOf<SearchResult.CommandResult>()
 
         for (actionId in allActionIds) {
             val description = KeymapActions.getDescription(actionId)
 
             // Match against description
-            val descriptionMatch = FuzzyMatcher.match(queryLower, description, description.lowercase())
+            val descriptionMatch = FuzzyMatcher.match(query, description, description.lowercase())
 
             // Also match against action ID (e.g., "window.new")
-            val actionIdMatch = FuzzyMatcher.match(queryLower, actionId, actionId.lowercase())
+            val actionIdMatch = FuzzyMatcher.match(query, actionId, actionId.lowercase())
 
             val bestMatch = listOfNotNull(descriptionMatch, actionIdMatch).maxByOrNull { it.score }
 
@@ -585,12 +581,10 @@ object GlobalSearchService {
         query: String,
         windowTools: List<ToolSearchRecord>,
     ): List<SearchResult.ToolResult> {
-        val queryLower = query.lowercase()
-
         return windowTools
             .mapNotNull { tool ->
-                val labelMatch = FuzzyMatcher.match(queryLower, tool.label, tool.label.lowercase())
-                val idMatch = FuzzyMatcher.match(queryLower, tool.panelId, tool.panelId.lowercase())
+                val labelMatch = FuzzyMatcher.match(query, tool.label, tool.label.lowercase())
+                val idMatch = FuzzyMatcher.match(query, tool.panelId, tool.panelId.lowercase())
                 val best = listOfNotNull(labelMatch, idMatch).maxByOrNull { it.score }
 
                 best?.takeIf { it.score >= MIN_SCORE }?.let {
@@ -663,16 +657,14 @@ object GlobalSearchService {
      * [SearchResult.McpToolResult] and BossConsole#380.
      */
     private fun searchMcpTools(query: String): List<SearchResult.McpToolResult> {
-        val queryLower = query.lowercase()
-
         return SearchSources
             .mcpTools()
             .mapNotNull { tool ->
                 val nameScore =
-                    FuzzyMatcher.match(queryLower, tool.name, tool.name.lowercase())?.score?.takeIf {
+                    FuzzyMatcher.match(query, tool.name, tool.name.lowercase())?.score?.takeIf {
                         it >= MIN_SCORE
                     }
-                val descScore = proseScore(queryLower, tool.description)
+                val descScore = proseScore(query, tool.description)
 
                 listOfNotNull(nameScore, descScore).maxOrNull()?.let { score ->
                     SearchResult.McpToolResult(
@@ -707,16 +699,14 @@ object GlobalSearchService {
      * without the disk read that reaching it entails.
      */
     private fun searchRecentPages(query: String): List<SearchResult.PageResult> {
-        val queryLower = query.lowercase()
-
         return SearchSources
             .recentPages()
             .mapNotNull { page ->
                 val titleScore =
-                    FuzzyMatcher.match(queryLower, page.title, page.title.lowercase())?.score?.takeIf {
+                    FuzzyMatcher.match(query, page.title, page.title.lowercase())?.score?.takeIf {
                         it >= MIN_SCORE
                     }
-                val urlScore = proseScore(queryLower, page.url)
+                val urlScore = proseScore(query, page.url)
 
                 listOfNotNull(titleScore, urlScore).maxOrNull()?.let { score ->
                     SearchResult.PageResult(url = page.url, title = page.title, score = score)

@@ -23,7 +23,7 @@ object FuzzyMatcher {
     /**
      * Attempt to fuzzy match a pattern against a target string.
      *
-     * @param pattern The search query (lowercase for case-insensitive matching)
+     * @param pattern The original search query; matching ignores case, scoring rewards matching case
      * @param target The string to match against
      * @param targetLower The lowercase version of target (for performance)
      * @return MatchResult if pattern matches, null otherwise
@@ -55,7 +55,7 @@ object FuzzyMatcher {
         if (patternIdx < patternLower.length) return null
 
         // Calculate score based on match quality
-        val score = calculateScore(pattern, target, targetLower, matchIndices)
+        val score = calculateScore(pattern, target, matchIndices)
         val matchRanges = collapseToRanges(matchIndices)
 
         return MatchResult(score, matchRanges)
@@ -67,7 +67,6 @@ object FuzzyMatcher {
     private fun calculateScore(
         pattern: String,
         target: String,
-        targetLower: String,
         matchIndices: List<Int>,
     ): Int {
         if (matchIndices.isEmpty()) return 0
@@ -129,7 +128,7 @@ object FuzzyMatcher {
      * - After a path separator (/ or \)
      * - After an underscore, hyphen, colon, or dot
      * - Transition from lowercase to uppercase (camelCase)
-     * - After whitespace
+     * - After a space
      */
     private fun isWordBoundary(
         text: String,

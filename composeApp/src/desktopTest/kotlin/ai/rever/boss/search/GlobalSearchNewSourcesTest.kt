@@ -100,6 +100,27 @@ class GlobalSearchNewSourcesTest {
         }
     }
 
+    @Test
+    fun `typed case changes tool ranking without changing matches`() {
+        registerTools(tool("one", "Boss"), tool("two", "boss"))
+
+        assertEquals(listOf("one", "two"), resultsOf<SearchResult.ToolResult>("Boss").map { it.panelId })
+        assertEquals(listOf("two", "one"), resultsOf<SearchResult.ToolResult>("boss").map { it.panelId })
+    }
+
+    @Test
+    fun `description fallback retains typed case and case insensitive eligibility`() {
+        SearchSources.registerMcpTools {
+            listOf(
+                McpToolSearchRecord("one", "test", "Boss", enabled = true),
+                McpToolSearchRecord("two", "test", "boss", enabled = true),
+            )
+        }
+
+        assertEquals(listOf("one", "two"), resultsOf<SearchResult.McpToolResult>("Boss").map { it.name })
+        assertEquals(listOf("two", "one"), resultsOf<SearchResult.McpToolResult>("boss").map { it.name })
+    }
+
     // --- tools ---------------------------------------------------------------------------------
 
     @Test
